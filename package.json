@@ -1,0 +1,36 @@
+{
+  "name": "recipes-app",
+  "version": "1.0.0",
+  "description": "The recipes application is to give idea of how to cook the foods",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Chris25005/PasswordResetFlow.git"
+  },
+  "keywords": [
+    "foods",
+    "meals",
+    "recipes"
+  ],
+  "author": "Christu",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Chris25005/PasswordResetFlow/issues"
+  },
+  "homepage": "https://github.com/Chris25005/PasswordResetFlow#readme",
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.18.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.10"
+  }
+}
