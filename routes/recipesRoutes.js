@@ -15,7 +15,7 @@ recipesRouter.get('/', getallrecipes);
 recipesRouter.get('/:id', getRecipeById);  
 
 // protected routes: only authenticated users can access
-recipesRouter.post('/', isAuthenticated, allowUsers(['users', 'admin']), createRecipes);
+recipesRouter.post('/', isAuthenticated, allowUsers(['user', 'admin']), createRecipes);
 recipesRouter.put('/:id', isAuthenticated, updateRecipeById);
 
 // admin only route: only admin users can access

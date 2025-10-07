@@ -1,10 +1,23 @@
 const Recipes = require('../models/Recipes');
+const sendEmail = require('../utils/email');
+const User = require('../models/User');
 
-// ✅ Create Recipe
+
+// Create Recipe
 const createRecipes = async (req, res) => {
     try {
         const newRecipe = new Recipes(req.body);
         const savedRecipe = await newRecipe.save();
+
+        const user = await User.findById(req.userId);
+
+       // send an email notification
+            await sendEmail(
+                process.env.GOOGLE_APP_EMAIL,
+                'New Recipe Created',
+                `A new recipe titled "${savedRecipe.title}" has been created.`
+            );
+
         res.status(201).json({ 
             message: 'Recipe created successfully', 
             recipe: savedRecipe 
@@ -17,7 +30,7 @@ const createRecipes = async (req, res) => {
     }
 };
 
-// ✅ Get All Recipes (hides __v field)
+// Get All Recipes (hides __v field)
 const getallrecipes = async (_req, res) => {
     try {
         const recipes = await Recipes.find().select('-__v');
@@ -33,7 +46,7 @@ const getallrecipes = async (_req, res) => {
     }
 };
 
-// ✅ Get Recipe By ID
+// Get Recipe By ID
 const getRecipeById = async (req, res) => {
     try {
         const recipe = await Recipes.findById(req.params.id).select('-__v');
@@ -52,7 +65,7 @@ const getRecipeById = async (req, res) => {
     }
 };
 
-// ✅ Update Recipe By ID
+// Update Recipe By ID
 const updateRecipeById = async (req, res) => {
     try {
         const updatedRecipe = await Recipes.findByIdAndUpdate(
@@ -77,7 +90,7 @@ const updateRecipeById = async (req, res) => {
     }
 };
 
-// ✅ Delete Recipe By ID
+// Delete Recipe By ID
 const deleteRecipeById = async (req, res) => {
     try {
         const deletedRecipe = await Recipes.findByIdAndDelete(req.params.id).select('-__v');
