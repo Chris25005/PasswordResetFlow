@@ -6,17 +6,19 @@ const {
     updateRecipeById,
     deleteRecipeById
 } = require('../controllers/recipesController');
-const { isAuthenticated } = require('../middlewares/auth');
+const { isAuthenticated, allowUsers} = require('../middlewares/auth');
 
 const recipesRouter = express.Router();
 
-// Public Routes
-recipesRouter.get('/', getallrecipes);     // anyone can view recipes
-recipesRouter.get('/:id', getRecipeById);  // anyone can view a single recipe
+// public routes: anyone can access (no authentication required)
+recipesRouter.get('/', getallrecipes);  
+recipesRouter.get('/:id', getRecipeById);  
 
-// Protected Routes (need token)
-recipesRouter.post('/', isAuthenticated, createRecipes);
+// protected routes: only authenticated users can access
+recipesRouter.post('/', isAuthenticated, allowUsers(['users', 'admin']), createRecipes);
 recipesRouter.put('/:id', isAuthenticated, updateRecipeById);
-recipesRouter.delete('/:id', isAuthenticated, deleteRecipeById);
+
+// admin only route: only admin users can access
+recipesRouter.delete('/:id', isAuthenticated, allowUsers(['admin']), deleteRecipeById);
 
 module.exports = recipesRouter;

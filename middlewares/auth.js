@@ -1,10 +1,12 @@
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
+const User = require('../models/User');
 
-const isAuthenticated = async (req, res, next) => {
+const isAuthenticated = async (req, res, next) => {  
 
-    // get the token from the request header
-    const token = req.headers.authorization && req.headers.authorization.split(' ')[1];
+    // get the token from the cookies
+    const token = req.cookies && req.cookies.token;
+
      // if no token, return 401
     if (!token) {
         return res.status(401).json({ message: 'No token provided' });
@@ -23,6 +25,27 @@ const isAuthenticated = async (req, res, next) => {
     }
 }
 
+const allowUsers = (roles) => {
+    return async (req, res, next) => {
+        // get the user role from the database using req.userId
+        const user = await User.findById(req.userId);
+
+        // if user not found, return 401
+        if (!user) {
+            return res.status(401).json({ message: 'User not found' });
+        }
+
+        // if user role is not in the allowed roles, return 403
+        if (!roles.includes(user.role)) {
+            return res.status(403).json({ message: 'Access denied' });
+        }
+
+        // proceed to the next middleware or route handler
+        next();
+    }
+}
+
 module.exports = {
-    isAuthenticated
+    isAuthenticated,
+    allowUsers
 }
