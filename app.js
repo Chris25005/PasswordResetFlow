@@ -1,19 +1,31 @@
-// import express module
-const express = require('express');
-const recipesRouter = require('./routes/recipesRoutes');
-const authRouter = require('./routes/authRoutes');
-const cookieParser = require('cookie-parser');
+const express = require("express");
+const cors = require("cors");
+const cookieParser = require("cookie-parser");
 
-// create an express application
+const authRouter = require("./routes/authRoutes");
+const recipesRouter = require("./routes/recipesRoutes");
+
 const app = express();
 
-// middleware to parse JSON request bodies
-app.use(express.json());
+// ✅ CORS FIRST (THIS IS ENOUGH)
+app.use(
+  cors({
+    origin: [
+      "http://localhost:5173",
+      "https://your-netlify-app.netlify.app"
+    ],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: true
+  })
+);
 
-// middleware to parse cookies
+// ✅ BODY PARSERS
+app.use(express.json());
 app.use(cookieParser());
 
-app.use('/auth', authRouter);
-app.use('/recipes', recipesRouter);
+// ✅ ROUTES
+app.use("/auth", authRouter);
+app.use("/recipes", recipesRouter);
 
 module.exports = app;
