@@ -7,12 +7,12 @@ const recipesRouter = require("./routes/recipesRoutes");
 
 const app = express();
 
-// ✅ CORS (NO WILDCARD ROUTES)
+// ✅ CORS
 app.use(
   cors({
     origin: [
       "http://localhost:5173",
-      "https://exquisite-souffle-2b9096.netlify.app/"
+      "https://spontaneous-cuchufli-8e6709.netlify.app"
     ],
     methods: ["GET", "POST", "PUT", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization"],
@@ -20,12 +20,14 @@ app.use(
   })
 );
 
-// ✅ BODY PARSERS
 app.use(express.json());
 app.use(cookieParser());
 
-// ✅ ROUTES
 app.use("/auth", authRouter);
 app.use("/recipes", recipesRouter);
+
+app.get("/", (req, res) => {
+  res.send("API is running");
+});
 
 module.exports = app;
