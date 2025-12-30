@@ -7,12 +7,12 @@ const recipesRouter = require("./routes/recipesRoutes");
 
 const app = express();
 
-// ✅ CORS FIRST (THIS IS ENOUGH)
+// ✅ FIXED CORS (NO TRAILING SLASH)
 app.use(
   cors({
     origin: [
       "http://localhost:5173",
-      "https://spontaneous-cuchufli-8e6709.netlify.app/"
+      "https://spontaneous-cuchufli-8e6709.netlify.app"
     ],
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
