@@ -1,107 +1,101 @@
-const User = require('../models/User');
-const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
-require('dotenv').config();
+const bcrypt = require("bcryptjs");
+const crypto = require("crypto");
+const User = require("../models/User");
+const sendEmail = require("../utils/email");
 
-const registerUser = async (req, res) => {
-    try {
-         // get the name, email, password from request body
-        const { name, email, password } = req.body;
+/* REGISTER */
+exports.register = async (req, res) => {
+  try {
+    const { name, email, password } = req.body;
 
-        // check if the user already registered
-        const existingUser = await User.findOne({ email });
-        
-         // if the user already exists, return an error
-        if (existingUser) {
-            return res.status(400).json({ message: 'User already exists' });
-        }
-
-         const hashedPassword = await bcrypt.hash(password, 10);
-
-         // create a new user
-        const newUser = new User({
-            name: name,
-            email: email,
-            password: hashedPassword
-        });
-
-        // save the user to the database
-        await newUser.save();
-
-        // return success response
-        res.status(201).json({ message: 'User registered successfully' });
-    } catch (error) {
-        res.ststus(500).json({ Message: 'Server error'});
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ message: "User already exists" });
     }
 
-}
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-const loginUser = async (req, res) => {
-    try {
-        // get the email and password from request body
-        const { email, password } = req.body;
+    await User.create({
+      name,
+      email,
+      password: hashedPassword
+    });
 
-        // check if the user exists
-        const user = await User.findOne({ email });
+    res.status(201).json({ message: "User registered successfully" });
+  } catch (err) {
+    res.status(500).json({ message: "Registration failed" });
+  }
+};
 
-        // if the user does not exist, return an error
-        if (!user) {
-            return res.status(400).json({ message: 'Invalid User' });
-        }
+/* LOGIN */
+exports.login = async (req, res) => {
+  try {
+    const { email, password } = req.body;
 
-        // check if the password is correct
-        const isPasswordValid = await bcrypt.compare(password, user.password);
-
-        // if the password is incorrect, return an error
-        if (!isPasswordValid) {
-            return res.status(400).json({ message: 'Incorrect Password' });
-        }
-
-         // generate a JWT token
-        const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
-
-
-        // set the token in the response header for httpOnly cookie
-        res.cookie('token', token, {httpOnly: true });
-
-    
-        // return success response
-        res.status(200).json({ message: 'Login successful'});
-    } catch (error) {
-        res.status(500).json({ message: 'Server error' });
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
     }
-}
 
-const Me = async (req, res) => {
-    try {
-        const userId = req.userId;
-        const user = await User.findById(userId).select('-password');
-        if (!user) {
-            return res.status(404).json({ message: 'User not found or not logged in' });
-        }
-        res.status(200).json({ user });
-    } catch (error) {
-        res.status(500).json({ message: 'Server error' });
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(401).json({ message: "Invalid credentials" });
     }
-}
 
-const logout = async (req, res) => {
-    try {
-        res.clearCookie('token', {
-            secure: true,
-            sameSite: 'none'
-        });
-        res.status(200).json({ message: 'Logout successful' });
-    } catch (error) {
-        res.status(500).json({ message: 'Server error' });
+    res.json({ message: "Login successful" });
+  } catch (err) {
+    res.status(500).json({ message: "Login failed" });
+  }
+};
+
+/* FORGOT PASSWORD */
+exports.forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
     }
-}
 
-module.exports = {
-    registerUser,
-    loginUser,
-    Me, 
-    logout
-}
+    const token = crypto.randomBytes(32).toString("hex");
 
+    user.resetToken = token;
+    user.resetTokenExpiry = Date.now() + 10 * 60 * 1000;
+    await user.save();
 
+    const resetLink = `https://your-netlify-app.netlify.app/reset-password/${token}`;
+    await sendEmail(email, resetLink);
+
+    res.json({ message: "Reset link sent to email" });
+  } catch (err) {
+    res.status(500).json({ message: "Error sending reset link" });
+  }
+};
+
+/* RESET PASSWORD */
+exports.resetPassword = async (req, res) => {
+  try {
+    const { token } = req.params;
+    const { password } = req.body;
+
+    const user = await User.findOne({
+      resetToken: token,
+      resetTokenExpiry: { $gt: Date.now() }
+    });
+
+    if (!user) {
+      return res.status(400).json({ message: "Invalid or expired token" });
+    }
+
+    user.password = await bcrypt.hash(password, 10);
+    user.resetToken = undefined;
+    user.resetTokenExpiry = undefined;
+
+    await user.save();
+
+    res.json({ message: "Password reset successful" });
+  } catch (err) {
+    res.status(500).json({ message: "Password reset failed" });
+  }
+};
