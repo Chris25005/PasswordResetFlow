@@ -7,25 +7,36 @@ const recipesRouter = require("./routes/recipesRoutes");
 
 const app = express();
 
-// ✅ CORS
+/* ======================================================
+   ✅ CORS (EXPRESS 5 SAFE)
+====================================================== */
 app.use(
   cors({
     origin: [
       "http://localhost:5173",
       "https://spontaneous-cuchufli-8e6709.netlify.app"
     ],
-    methods: ["GET", "POST", "PUT", "DELETE"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-    credentials: true
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"]
   })
 );
 
+/* ======================================================
+   ✅ BODY PARSERS
+====================================================== */
 app.use(express.json());
 app.use(cookieParser());
 
+/* ======================================================
+   ✅ ROUTES
+====================================================== */
 app.use("/auth", authRouter);
 app.use("/recipes", recipesRouter);
 
+/* ======================================================
+   ✅ HEALTH CHECK
+====================================================== */
 app.get("/", (req, res) => {
   res.send("API is running");
 });

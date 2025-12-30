@@ -1,14 +1,17 @@
+const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const User = require("../models/User");
+const crypto = require("crypto");
 
-// ✅ REGISTER
+/* ======================================================
+   REGISTER
+====================================================== */
 exports.register = async (req, res) => {
   try {
     const { name, email, password } = req.body;
 
     if (!name || !email || !password) {
-      return res.status(400).json({ message: "All fields required" });
+      return res.status(400).json({ message: "All fields are required" });
     }
 
     const existingUser = await User.findOne({ email });
@@ -24,16 +27,30 @@ exports.register = async (req, res) => {
       password: hashedPassword
     });
 
-    res.status(201).json({ message: "User registered successfully" });
-  } catch (err) {
-    res.status(500).json({ message: "Register failed", error: err.message });
+    res.status(201).json({
+      message: "User registered successfully",
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email
+      }
+    });
+  } catch (error) {
+    console.error("Register error:", error);
+    res.status(500).json({ message: "Server error" });
   }
 };
 
-// ✅ LOGIN
+/* ======================================================
+   LOGIN
+====================================================== */
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ message: "All fields are required" });
+    }
 
     const user = await User.findOne({ email });
     if (!user) {
@@ -51,18 +68,90 @@ exports.login = async (req, res) => {
       { expiresIn: "1d" }
     );
 
-    res.json({ message: "Login successful", token });
-  } catch (err) {
-    res.status(500).json({ message: "Login failed", error: err.message });
+    res.status(200).json({
+      message: "Login successful",
+      token,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email
+      }
+    });
+  } catch (error) {
+    console.error("Login error:", error);
+    res.status(500).json({ message: "Server error" });
   }
 };
 
-// ✅ FORGOT PASSWORD
+/* ======================================================
+   FORGOT PASSWORD
+====================================================== */
 exports.forgotPassword = async (req, res) => {
-  res.json({ message: "Forgot password route working" });
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ message: "Email is required" });
+    }
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const resetToken = crypto.randomBytes(32).toString("hex");
+
+    user.resetToken = resetToken;
+    user.resetTokenExpiry = Date.now() + 15 * 60 * 1000; // 15 mins
+    await user.save();
+
+    const resetLink = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
+
+    // (Optional) Send email here
+    console.log("Reset link:", resetLink);
+
+    res.status(200).json({
+      message: "Password reset link sent",
+      resetLink
+    });
+  } catch (error) {
+    console.error("Forgot password error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
 };
 
-// ✅ RESET PASSWORD
+/* ======================================================
+   RESET PASSWORD
+====================================================== */
 exports.resetPassword = async (req, res) => {
-  res.json({ message: "Reset password route working" });
+  try {
+    const { token } = req.params;
+    const { password } = req.body;
+
+    if (!password) {
+      return res.status(400).json({ message: "Password is required" });
+    }
+
+    const user = await User.findOne({
+      resetToken: token,
+      resetTokenExpiry: { $gt: Date.now() }
+    });
+
+    if (!user) {
+      return res.status(400).json({ message: "Invalid or expired token" });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    user.password = hashedPassword;
+    user.resetToken = undefined;
+    user.resetTokenExpiry = undefined;
+
+    await user.save();
+
+    res.status(200).json({ message: "Password reset successful" });
+  } catch (error) {
+    console.error("Reset password error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
 };
