@@ -31,7 +31,6 @@
     "express": "^4.19.2",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^8.19.1",
-    "nodemailer": "^7.0.9",
     "sib-api-v3-sdk": "^8.5.0"
   },
   "devDependencies": {
