@@ -5,43 +5,28 @@ import connectDB from "./config/connectDB.js";
 import authRoutes from "./routes/authRoutes.js";
 
 dotenv.config();
-connectDB();
 
 const app = express();
 
-/* =======================
-   CORS — FINAL FIX
-======================= */
-const allowedOrigins = [
-  "http://localhost:5173",
-  "https://passwordresetflow007.netlify.app",
-];
-
+// Middleware
+app.use(express.json());
 app.use(
   cors({
-    origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error("CORS not allowed"));
-      }
-    },
+    origin: process.env.FRONTEND_URL,
     credentials: true,
   })
 );
 
-app.use(express.json());
-
-/* =======================
-   ROUTES
-======================= */
-app.use("/auth", authRoutes);
+// Routes
+app.use("/api/auth", authRoutes);
 
 app.get("/", (req, res) => {
   res.send("API is running");
 });
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () =>
-  console.log(`🚀 Server running on port ${PORT}`)
-);
+connectDB();
+
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
+});
