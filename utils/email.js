@@ -7,13 +7,14 @@ export const sendEmail = async (to, link) => {
       port: 587,
       secure: false,
       auth: {
-        user: process.env.BREVO_SMTP_USER, // xxxx@smtp-brevo.com
-        pass: process.env.BREVO_SMTP_PASS, // xsmtpsib-****
+        user: process.env.BREVO_SMTP_USER,
+        pass: process.env.BREVO_SMTP_PASS,
       },
     });
 
     await transporter.sendMail({
-      from: `"Password Reset" <chrisdiva07@gmail.com>`, // ✅ VERIFIED EMAIL
+      // ✅ MUST be a VERIFIED email in Brevo
+      from: `"Password Reset" <chrisdiva07@gmail.com>`,
       to,
       subject: "Password Reset",
       html: `
